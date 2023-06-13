@@ -27,9 +27,9 @@ top 100 songs.
 * _Instrumentalness_: mide el nivel instrumental de la pista, valorado de 0 a 1. Los sonidos "ooh" y "aah" se tratan como instrumentales en este contexto. Las canciones de rap o de palabras habladas son claramente "vocales". Cuanto más cercano a 1 esté el nivel de instrumentalidad, mayor será la probabilidad de que la pista no contenga contenido vocal.
 * _Liveness_: mide la presencia de audiencia en la canción, valorada de 0 a 1. Cuanto más cercano a 1, es más probable que la canción haya sido grabada en vivo.
 * _Valence_: mide que tan alegre es una canción, valorada de 0 a 1. Cuanto más cerca de 1, es más probable que la canción suene más positiva o alegre. Valores más bajos indican que la canción suena más negativa (enojada, triste, etc). 
-* Tempo: mide en beats por minuto la velocidad o el ritmo de una canción. Su rango habitual se encuentra entre 50 y 150 BPM. 
-* Popularidad: mide el nivel de popularidad de la canción, valorada de 0 a 100. Para obtener ese valor, se toma en cuenta la cantidad de reproducciones de cada canción y que tan recientes han sido. 
- * Explicit: variable categórica que indica con 0 si la canción no contiene letras explícitas, y con 1 si la canción contiene dichas letras. 
+* _Tempo_: mide en beats por minuto la velocidad o el ritmo de una canción. Su rango habitual se encuentra entre 50 y 150 BPM. 
+* _Popularidad_: mide el nivel de popularidad de la canción, valorada de 0 a 100. Para obtener ese valor, se toma en cuenta la cantidad de reproducciones de cada canción y que tan recientes han sido. 
+ * _Explicit_: variable categórica que indica con 0 si la canción no contiene letras explícitas, y con 1 si la canción contiene dichas letras. 
 
 # Equipo : gatito explosion.pjg  <img src= "https://media.discordapp.net/attachments/903024711485775882/1118194764735582329/gato.jpg" width = "50" height = "50" />
 * [evilla8](https://github.com/evilla8)
