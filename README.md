@@ -32,7 +32,7 @@ top 100 songs.
  * Explicit: variable categórica que indica con 0 si la canción no contiene letras explícitas, y con 1 si la canción contiene dichas letras. 
 
 # Equipo : gatito explosion.pjg  <img src= "https://media.discordapp.net/attachments/903024711485775882/1118194764735582329/gato.jpg" width = "50" height = "50" />
-* @<username>
+* @<evilla8>
 * @<username>
 * @<username>
 * @<username>
