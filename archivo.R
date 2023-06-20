@@ -105,17 +105,7 @@ spotify$instr <- format(spotify$instr, scientific = FALSE)
 spotify$instr <- as.numeric(spotify$instr)
 spotify$instr <- round(spotify$instr, 2)
 
-#spotify$year <- ifelse(spotify$year >= 1920 & spotify$year <= 1929, "1920s", spotify$year)
-#spotify$year <- ifelse(spotify$year >= 1930 & spotify$year <= 1939, "1930s", spotify$year)
-#spotify$year <- ifelse(spotify$year >= 1940 & spotify$year <= 1949, "1940s", spotify$year)
-#spotify$year <- ifelse(spotify$year >= 1950 & spotify$year <= 1959, "1950s", spotify$year)
-#spotify$year <- ifelse(spotify$year >= 1960 & spotify$year <= 1969, "1960s", spotify$year)
-#spotify$year <- ifelse(spotify$year >= 1970 & spotify$year <= 1979, "1970s", spotify$year)
-#spotify$year <- ifelse(spotify$year >= 1980 & spotify$year <= 1989, "1980s", spotify$year)
-#spotify$year <- ifelse(spotify$year >= 1990 & spotify$year <= 1999, "1990s", spotify$year)
-#spotify$year <- ifelse(spotify$year >= 2000 & spotify$year <= 2009, "2000s", spotify$year)
-#spotify$year <- ifelse(spotify$year >= 2010 & spotify$year <= 2019, "2010s", spotify$year)
-#spotify$year <- ifelse(spotify$year >= 2020 & spotify$year <= 2029, "2020s", spotify$year)
-
-#spotify %>% ggplot(aes(x = year, y = pop)) + geom_point()
-
+#! Creando columnas con décadas
+spotify$decada <- NA
+spotify$decada <- floor(spotify$year / 10) * 10
+spotify$decada <- as.factor(spotify$decada)
