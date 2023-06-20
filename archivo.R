@@ -8,7 +8,7 @@ packages <- function(...) {
         lapply(need, require, character.only = TRUE)
     }
 }
-packages("readr", "ggplot2", "dplyr", "tidyverse")
+packages("readr", "ggplot2", "dplyr", "tidyverse", "tibble")
 
 #Carga de .csv en variable spotify
 spotify <- read.csv("data.csv")
@@ -57,18 +57,21 @@ ggplot(spotify, aes(x=pop, fill = out)) +
   labs(x = "Popularidad", fill = "Atípico")
 
 
-#!explicit debería ser factor (1 si, 0 no)
-#CAMBIANDO VALORES DE LA COLUMNA "MODE"
+#!explicit a factor (1 si, 0 no)
+spotify$explicit <- ifelse(spotify$explicit == 0, "No", "Yes")
+spotify$explicit <- as.factor(spotify$explicit)
+#!mode a factor (1 mayor, 0 menor)
 spotify$mode <- ifelse(spotify$mode == 0, "Menor", "Mayor")
-#!mode debería ser factor (1 mayor, 0 menor)
+spotify$mode <- as.factor(spotify$mode)
 
 #!Eliminar id y release_date (ya tenemos el año)
-spotify <- subset(spotify, select = id)
+spotify <- subset(spotify, select = -c(id, release_date))
 
 #!Reordenando columnas
-spotify <- spotify[, c("artists", "name", "year", "duration", "explicit", "pop", "dance", "instr", "acoust", "speech", "liveness", "energy", "loudness", "valence", "tempo", "key", "mode" )]
+col_order <- c("artists", "name", "year", "duration", "explicit", "pop", "dance", "instr", "acoust", "speech", "liveness", "energy", "loudness", "valence", "tempo", "key", "mode" )
+spotify <- spotify[,col_order]
 
-
+length(colnames(spotify))
 #!Duplicados:
 #Eliminar donde se repite nombre de artista y cancion - baja de 169909 a 156608
 spotify <- subset(spotify, !duplicated(paste(artists, name)))
