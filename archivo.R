@@ -70,8 +70,6 @@ spotify <- subset(spotify, select = -c(id, release_date))
 #!Reordenando columnas
 col_order <- c("artists", "name", "year", "duration", "explicit", "pop", "dance", "instr", "acoust", "speech", "liveness", "energy", "loudness", "valence", "tempo", "key", "mode" )
 spotify <- spotify[,col_order]
-
-length(colnames(spotify))
 #!Duplicados:
 #Eliminar donde se repite nombre de artista y cancion - baja de 169909 a 156608
 spotify <- subset(spotify, !duplicated(paste(artists, name)))
@@ -89,26 +87,15 @@ spotify$name <- sapply(spotify$name, tolower)
 #*VUELVO A APLICAR EL FILTRO PARA ELIMINAR DUPLICADOS, baja de 156353 a 155976
 
 #!Redondeos
-#redondear tempo (bpm)
-spotify$tempo <- round(spotify$tempo, 0)
+a_redondear <- c("valence", "dance", "acoust", "liveness", "energy", "speech")
+for (x in a_redondear) {
+  if (x == "tempo") {
+    y = 0
+  } else { y = 2
+  }
+  spotify[[x]] <- round(as.numeric(spotify[[x]]), y)
+}
 
-#redondear valence
-spotify$valence <- round(spotify$valence, 2)
-
-#redondear dance
-spotify$dance <- round(spotify$dance, 2)
-
-#redondear acoust
-spotify$acoust <- round(spotify$acoust, 2)
-
-#redondear liveness
-spotify$liveness <- round(spotify$liveness, 2)
-
-#redondear energy
-spotify$energy <- round(spotify$energy, 2)
-
-#redondear speechness
-spotify$speech <- round(spotify$speech, 2)
 
 #cambio de rango en la variable loudness, para pasar de -60/0 a 40/100, y redondear
 spotify$loudness <- round(spotify$loudness + 100, 0)
