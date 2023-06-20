@@ -31,9 +31,9 @@ top 100 songs.
 * _Popularidad_: mide el nivel de popularidad de la canción, valorada de 0 a 100. Para obtener ese valor, se toma en cuenta la cantidad de reproducciones de cada canción y que tan recientes han sido. 
  * _Explicit_: variable categórica que indica con 0 si la canción no contiene letras explícitas, y con 1 si la canción contiene dichas letras. 
 
-# Equipo : gatito explosion.pjg  <img src= "https://media.discordapp.net/attachments/903024711485775882/1118194764735582329/gato.jpg" width = "50" height = "50" />
+# Equipo : gatito explosion.jpg  <img src= "https://media.discordapp.net/attachments/903024711485775882/1118194764735582329/gato.jpg" width = "50" height = "50" />
 * [evilla8](https://github.com/evilla8)
-* [user](link)
-* [user](link)
+* [Montel7u]([link](https://github.com/Montel7u))
+* [Mathias](https://github.com/mathitorres1)
 * [user](link)
 
