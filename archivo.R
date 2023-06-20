@@ -8,7 +8,7 @@ packages <- function(...) {
         lapply(need, require, character.only = TRUE)
     }
 }
-packages("readr", "ggplot2", "dplyr")
+packages("readr", "ggplot2", "dplyr", "tidyverse")
 
 #Carga de .csv en variable spotify
 spotify <- read.csv("data.csv")
@@ -36,10 +36,26 @@ spotify$duration <- sapply(spotify$duration, convert)
 spotify$duration <- as.numeric(spotify$duration)
 
 #!duración tiene demasiado rango (posibles atípicos?)
-#Eliminar aquellas donde la duracion sea mayor a 20 min - baja de 156608 a 156353
-spotify <- subset(spotify, duration <= 20)
-#Eliminar aquellas donde la duracion sea menor a 1 min - baja de 155976 a 154524
-spotify <- subset(spotify, duration >= 1)
+#*Analsis de atípicos:
+summary(spotify$duration)
+#Grafico para visualizarlo
+ggplot(spotify, aes(x=duration)) +
+  geom_boxplot()
+#Extrayendo átipicos del gráfico
+atipico_min <- min(boxplot.stats(spotify$duration)$out)
+atipicos <- boxplot.stats(spotify$duration)$out
+
+#Creando una nueva columna con información sobre atípico (out = outliner)
+spotify$out <- ifelse(spotify$duration > atipico_min, "yes", "no")
+spotify$out <- as.factor(spotify$out)
+
+ggplot(spotify, aes(x = out, y = pop, color = out)) +
+  geom_boxplot()+
+  labs(x = "¿Atípico?", y = "Popularidad")
+ggplot(spotify, aes(x=pop, fill = out)) +
+  geom_histogram() +
+  labs(x = "Popularidad", fill = "Atípico")
+
 
 #!explicit debería ser factor (1 si, 0 no)
 #CAMBIANDO VALORES DE LA COLUMNA "MODE"
