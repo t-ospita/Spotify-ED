@@ -10,18 +10,20 @@ packages <- function(...) {
 }
 packages("readr", "ggplot2", "dplyr")
 
-#CARGA DE CSV EN VARIABLE SPOTIFY
+#Carga de .csv en variable spotify
 spotify <- read.csv("data.csv")
 
-#ELIMINAR ALGUNAS VARIABLES
-spotify <- subset(spotify, select = -c(id, release_date))
+#Viendo los datos
+head(spotify)
+summary(spotify)
 
-#CAMBIAR NOMBRES DE ALGUNAS VARIABLES
+#!Cambiar nombre de algunas variables
 spotify <- spotify %>% rename(instr = instrumentalness, 
                               duration = duration_ms, pop = popularity, 
                               dance = danceability, speech = speechiness, acoust = acousticness)
 
-#FUNCION PARA PASAR DE MILISEGUNDOS A SEGUNDOS
+#!duration está en ms
+#Función para pasar de milisegundos a minutos
 convert <- function(duration) { 
   duration <- duration /1000
   minutos <- duration %/% 60
@@ -29,61 +31,70 @@ convert <- function(duration) {
   resultado <- sprintf("%d.%02d", as.integer(minutos), as.integer(segundos_restantes))
   return(resultado)
 }
+#Usando la función
 spotify$duration <- sapply(spotify$duration, convert)
 spotify$duration <- as.numeric(spotify$duration)
 
-#REORDENANDO COLUMNAS
+#!duración tiene demasiado rango (posibles atípicos?)
+#Eliminar aquellas donde la duracion sea mayor a 20 min - baja de 156608 a 156353
+spotify <- subset(spotify, duration <= 20)
+#Eliminar aquellas donde la duracion sea menor a 1 min - baja de 155976 a 154524
+spotify <- subset(spotify, duration >= 1)
+
+#!explicit debería ser factor (1 si, 0 no)
+#CAMBIANDO VALORES DE LA COLUMNA "MODE"
+spotify$mode <- ifelse(spotify$mode == 0, "Menor", "Mayor")
+#!mode debería ser factor (1 mayor, 0 menor)
+
+#!Eliminar id y release_date (ya tenemos el año)
+spotify <- subset(spotify, select = id)
+
+#!Reordenando columnas
 spotify <- spotify[, c("artists", "name", "year", "duration", "explicit", "pop", "dance", "instr", "acoust", "speech", "liveness", "energy", "loudness", "valence", "tempo", "key", "mode" )]
 
-#ELIMINAR AQUELLAS DONDE SE REPITE NOMBRE DE ARTISTA Y CANCION - baja de 169909 a 156608
+
+#!Duplicados:
+#Eliminar donde se repite nombre de artista y cancion - baja de 169909 a 156608
 spotify <- subset(spotify, !duplicated(paste(artists, name)))
 
-#ELIMINAR AQUELLAS DONDE LA DURACION SEA MAYOR A 20 MIN - baja de 156608 a 156353
-spotify <- subset(spotify, duration <= 20)
-
-#CORREGIR EL NOMBRE DEL ARTISTA PARA QUITAR [', ', y ']
+#Corregir el nombre del artista para quitar [', ', y ']
 spotify$artists <- gsub("\\['|'|'\\]", "", spotify$artists)
 
-#CORREGIR EL NOMBRE DEL ARTISTA PARA QUITAR [", ", y "]
+#Corregir el nombre del artista para quitar [", ", y "]
 spotify$artists <- gsub("\\[\"|\"\\]", "", spotify$artists)
 
-#PASAR TODO A MINUSCULAS PARA FACILITAR FILTRADO
+#Pasar todo a minúsculas para facilitar filtrado
 spotify$artists <- sapply(spotify$artists, tolower)
 spotify$name <- sapply(spotify$name, tolower)
 
-#VUELVO A APLICAR EL FILTRO PARA ELIMINAR DUPLICADOS, baja de 156353 a 155976
+#*VUELVO A APLICAR EL FILTRO PARA ELIMINAR DUPLICADOS, baja de 156353 a 155976
 
-#ELIMINAR AQUELLAS DONDE LA DURACION SEA MENOR A 1 MIN - baja de 155976 a 154524
-spotify <- subset(spotify, duration >= 1)
-
-#CAMBIANDO VALORES DE LA COLUMNA "MODE"
-spotify$mode <- ifelse(spotify$mode == 0, "Menor", "Mayor")
-
-#REDONDEAR TEMPO (BPM)
+#!Redondeos
+#redondear tempo (bpm)
 spotify$tempo <- round(spotify$tempo, 0)
 
-#REDONDEAR VALENCE
+#redondear valence
 spotify$valence <- round(spotify$valence, 2)
 
-#REDONDEAR DANCE
+#redondear dance
 spotify$dance <- round(spotify$dance, 2)
 
-#REDONDEAR ACOUST
+#redondear acoust
 spotify$acoust <- round(spotify$acoust, 2)
 
-#REDONDEAR LIVENESS
+#redondear liveness
 spotify$liveness <- round(spotify$liveness, 2)
 
-#REDONDEAR ENERGY
+#redondear energy
 spotify$energy <- round(spotify$energy, 2)
 
-#REDONDEAR SPEECHNESS
+#redondear speechness
 spotify$speech <- round(spotify$speech, 2)
 
-#CAMBIO DE RANGO EN LA VARIABLE LOUDNESS, PARA PASAR DE -60/0 A 40/100, Y REDONDEAR
+#cambio de rango en la variable loudness, para pasar de -60/0 a 40/100, y redondear
 spotify$loudness <- round(spotify$loudness + 100, 0)
 
-#NO MOSTRAR INSTRUMENTALNESS COMO FORMATIO CIENTIFICO
+#no mostrar instrumentalness como formatio cientifico
 spotify$instr <- format(spotify$instr, scientific = FALSE)
 spotify$instr <- as.numeric(spotify$instr)
 spotify$instr <- round(spotify$instr, 2)
