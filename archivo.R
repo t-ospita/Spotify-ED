@@ -75,10 +75,8 @@ spotify <- subset(spotify, select = -c(id, release_date))
 #!Reordenando columnas
 col_order <- c("artists", "name", "year", "duration", "explicit", "pop", "dance", "instr", "acoust", "speech", "liveness", "energy", "loudness", "valence", "tempo", "key", "mode")
 spotify <- spotify[, col_order]
-#!Duplicados:
-#Eliminar donde se repite nombre de artista y cancion - baja de 169909 a 156608
-spotify <- subset(spotify, !duplicated(paste(artists, name)))
 
+#!Duplicados:
 #Corregir el nombre del artista para quitar [', ', y ']
 spotify$artists <- gsub("\\['|'|'\\]", "", spotify$artists)
 
@@ -89,7 +87,13 @@ spotify$artists <- gsub("\\[\"|\"\\]", "", spotify$artists)
 spotify$artists <- sapply(spotify$artists, tolower)
 spotify$name <- sapply(spotify$name, tolower)
 
-#*VUELVO A APLICAR EL FILTRO PARA ELIMINAR DUPLICADOS, baja de 156353 a 155976
+#Eliminar donde se repite nombre de artista y cancion
+#Guardando cantidad de observaciones
+col_og <- nrow(spotify)
+spotify <- subset(spotify, !duplicated(paste(artists, name)))
+#Restando cantidad de observaciones viejas con cantidad de observaciones nuevas
+col_og - nrow(spotify)
+#Quedan eliminadas 13304 observaciones
 
 #!Redondeos
 a_redondear <- c("valence", "dance", "acoust", "liveness", "energy", "speech")
