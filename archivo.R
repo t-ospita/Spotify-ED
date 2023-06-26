@@ -1,14 +1,16 @@
 #Función que instala los paquetes dados
 packages <- function(...) {
     libs <- unlist(list(...))
-    req <- unlist(lapply(libs,require, character.only = TRUE))
-    need <- libs[req==FALSE]
-    if(length(need)>0){
+    req <- unlist(lapply(libs, require, character.only = TRUE))
+    need <- libs[req == FALSE]
+    if (length(need) > 0) {
         install.packages(need)
         lapply(need, require, character.only = TRUE)
     }
 }
-packages("readr", "ggplot2", "dplyr", "tidyverse", "tibble")
+
+packages(c("GGally", "readr", "ggplot2", "dplyr",
+          "tidyverse", "tibble", "reshape2"))
 
 #Carga de .csv en variable spotify
 spotify <- read.csv("data.csv")
@@ -24,8 +26,8 @@ spotify <- spotify %>% rename(instr = instrumentalness,
 
 #!duration está en ms
 #Función para pasar de milisegundos a minutos
-convert <- function(duration) { 
-  duration <- duration /1000
+convert <- function(duration) {
+  duration <- duration / 1000
   minutos <- duration %/% 60
   segundos_restantes <- duration %% 60
   resultado <- sprintf("%d.%02d", as.integer(minutos), as.integer(segundos_restantes))
@@ -39,8 +41,10 @@ spotify$duration <- as.numeric(spotify$duration)
 #*Analsis de atípicos:
 summary(spotify$duration)
 #Grafico para visualizarlo
-ggplot(spotify, aes(x=duration)) +
+ggplot(spotify, aes(x = duration, y = duration)) +
   geom_boxplot()
+
+
 #Extrayendo átipicos del gráfico
 atipico_min <- min(boxplot.stats(spotify$duration)$out)
 atipicos <- boxplot.stats(spotify$duration)$out
@@ -50,9 +54,10 @@ spotify$out <- ifelse(spotify$duration > atipico_min, "yes", "no")
 spotify$out <- as.factor(spotify$out)
 
 ggplot(spotify, aes(x = out, y = pop, color = out)) +
-  geom_boxplot()+
-  labs(x = "¿Atípico?", y = "Popularidad")
-ggplot(spotify, aes(x=pop, fill = out)) +
+  geom_boxplot() +
+  labs(x = "¿Atípico?", y = "Popularidad") +
+  stat_summary(fun = mean, color = "black", shape = 10)
+ggplot(spotify, aes(x = pop, fill = out)) +
   geom_histogram() +
   labs(x = "Popularidad", fill = "Atípico")
 
@@ -68,8 +73,8 @@ spotify$mode <- as.factor(spotify$mode)
 spotify <- subset(spotify, select = -c(id, release_date))
 
 #!Reordenando columnas
-col_order <- c("artists", "name", "year", "duration", "explicit", "pop", "dance", "instr", "acoust", "speech", "liveness", "energy", "loudness", "valence", "tempo", "key", "mode" )
-spotify <- spotify[,col_order]
+col_order <- c("artists", "name", "year", "duration", "explicit", "pop", "dance", "instr", "acoust", "speech", "liveness", "energy", "loudness", "valence", "tempo", "key", "mode")
+spotify <- spotify[, col_order]
 #!Duplicados:
 #Eliminar donde se repite nombre de artista y cancion - baja de 169909 a 156608
 spotify <- subset(spotify, !duplicated(paste(artists, name)))
