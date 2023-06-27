@@ -10,7 +10,9 @@ packages <- function(...) {
 }
 
 packages(c("GGally", "readr", "ggplot2", "dplyr",
-          "tidyverse", "tibble", "reshape2"))
+          "tidyverse", "tibble", "reshape2", "hrbrthemes", "cowplot"))
+packages("hexbin")
+packages("ggpointdensity")
 
 #Carga de .csv en variable spotify
 spotify <- read.csv("data.csv")
@@ -20,8 +22,8 @@ head(spotify)
 summary(spotify)
 
 #!Cambiar nombre de algunas variables
-spotify <- spotify %>% rename(instr = instrumentalness, 
-                              duration = duration_ms, pop = popularity, 
+spotify <- spotify %>% rename(instr = instrumentalness,
+                              duration = duration_ms, pop = popularity,
                               dance = danceability, speech = speechiness, acoust = acousticness)
 
 #!duration está en ms
@@ -95,17 +97,6 @@ spotify <- subset(spotify, !duplicated(paste(artists, name)))
 col_og - nrow(spotify)
 #Quedan eliminadas 13304 observaciones
 
-#!Redondeos
-a_redondear <- c("valence", "dance", "acoust", "liveness", "energy", "speech")
-for (x in a_redondear) {
-  if (x == "tempo") {
-    y = 0
-  } else { y = 2
-  }
-  spotify[[x]] <- round(as.numeric(spotify[[x]]), y)
-}
-
-
 #cambio de rango en la variable loudness, para pasar de -60/0 a 40/100, y redondear
 spotify$loudness <- round(spotify$loudness + 100, 0)
 
@@ -118,3 +109,44 @@ spotify$instr <- round(spotify$instr, 2)
 spotify$decada <- NA
 spotify$decada <- floor(spotify$year / 10) * 10
 spotify$decada <- as.factor(spotify$decada)
+
+#! Creando un heatmap de todas las variables para analizar relacion
+#Calculando matriz de correlación
+heat <- cor(spotify[sapply(spotify, is.numeric)])
+#Cambiando formato al adecuado
+heat <- melt(heat)
+
+#Gráfico para ver las relaciones entre variables
+ggplot(heat, aes(x = Var1, y = Var2, fill = value)) +
+  geom_tile(colour = "black") +
+  scale_fill_gradient(high = "#3246f8", low = "#d6d6d6") +
+  geom_text(aes(label = round(value, 2)), color = "black")
+
+#!Haciendo gráfico de puntos de todas las variables con popularidad
+#El objetivo es usar un for loop que itere a través de todas las variables cambiando el eje x
+
+variables <- names(spotify)[sapply(spotify, is.numeric)]
+plot_list <- list()
+start_time <- Sys.time()
+#Definiendo el foor loop
+for (i in seq_along(variables)) { #seq_along es usado para después poder nombrar los gráficos
+  var <- variables[i] #Toma el elemento i de Variables
+
+  p  <- ggplot(spotify, aes(x = .data[[var]], y = pop)) +
+  geom_pointdensity(size = 2) + scale_color_viridis_c() #Notar: se colorea basado en la densidad de puntos.
+
+  #Guardando cada gráficos de forma separada en formato p_i:
+  plot_name <- paste0("p_", i) #Creando el nombre del gráfico i
+  assign(plot_name, p) #Asignando el nombre al gráfico correspondiente
+
+  plot_list[[i]] <- p   #Guardando lista de gráficos
+}
+ 
+#*EL CÓDIGO DE ABAJO PUEDE DEMORAR MINUTOS EN TERMINAR
+start_time_plot_grid <- Sys.time()
+plot_grid(plotlist = plot_list)
+end_time_plot_grid <- Sys.time()
+time_taken_plot_grid <- end_time_plot_grid - start_time_plot_grid
+cat("Time taken by plot_grid:", time_taken_plot_grid, "seconds.\n")
+#! En mi caso tomó mas de 15 minutos.
+#!Notar datos atípicos con dance = tempo = energy pero con popularidad alta
