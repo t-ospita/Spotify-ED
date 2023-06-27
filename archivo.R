@@ -10,9 +10,8 @@ packages <- function(...) {
 }
 
 packages(c("GGally", "readr", "ggplot2", "dplyr",
-          "tidyverse", "tibble", "reshape2", "hrbrthemes", "cowplot"))
-packages("hexbin")
-packages("ggpointdensity")
+          "tidyverse", "tibble", "reshape2", 
+          "hrbrthemes", "cowplot", "ggpointdensity"))
 
 #Carga de .csv en variable spotify
 spotify <- read.csv("data.csv")
