@@ -13,6 +13,12 @@ packages(c("GGally", "readr", "ggplot2", "dplyr",
           "tidyverse", "tibble", "reshape2", 
           "hrbrthemes", "cowplot", "ggpointdensity"))
 
+#Función para guardar gráfico:
+plot_save <- function(plot_objeto, filename) {
+  file_path <- file.path("plot", "limpieza", filename)
+  ggsave(file_path, plot = plot_objeto)
+}
+
 #Carga de .csv en variable spotify
 spotify <- read.csv("data.csv")
 
@@ -42,9 +48,10 @@ spotify$duration <- as.numeric(spotify$duration)
 #*Analsis de atípicos:
 summary(spotify$duration)
 #Grafico para visualizarlo
-ggplot(spotify, aes(x = duration, y = duration)) +
-  geom_boxplot()
-
+box_atipicos <- ggplot(spotify, aes(x = duration, y = duration)) +
+                geom_boxplot()
+#Guardando el gráfico
+plot_save(box_atipicos, "boxplot_duracion_atipicos.png")
 
 #Extrayendo átipicos del gráfico
 atipico_min <- min(boxplot.stats(spotify$duration)$out)
@@ -54,15 +61,19 @@ atipicos <- boxplot.stats(spotify$duration)$out
 spotify$out <- ifelse(spotify$duration > atipico_min, "yes", "no")
 spotify$out <- as.factor(spotify$out)
 
+#Gráficos para analizar los atípicos
+box_ordenado_out <-
 ggplot(spotify, aes(x = out, y = pop, color = out)) +
   geom_boxplot() +
   labs(x = "¿Atípico?", y = "Popularidad") +
   stat_summary(fun = mean, color = "black", shape = 10)
+histograma_ordenado_out <- 
 ggplot(spotify, aes(x = pop, fill = out)) +
   geom_histogram() +
   labs(x = "Popularidad", fill = "Atípico")
-
-
+#Guardando gráficos
+plot_save(box_ordenado_out, "boxplot_popularidad_atipico.png")
+plot_save(histograma_ordenado_out, "histograma_popularidad_atipicos.png")
 #!explicit a factor (1 si, 0 no)
 spotify$explicit <- ifelse(spotify$explicit == 0, "No", "Yes")
 spotify$explicit <- as.factor(spotify$explicit)
@@ -116,11 +127,12 @@ heat <- cor(spotify[sapply(spotify, is.numeric)])
 heat <- melt(heat)
 
 #Gráfico para ver las relaciones entre variables
+heatmap_spotify <-
 ggplot(heat, aes(x = Var1, y = Var2, fill = value)) +
   geom_tile(colour = "black") +
   scale_fill_gradient(high = "#3246f8", low = "#d6d6d6") +
   geom_text(aes(label = round(value, 2)), color = "black")
-
+plot_save(heatmap_spotify, "heatmap_variables.png")
 #!Haciendo gráfico de puntos de todas las variables con popularidad
 #El objetivo es usar un for loop que itere a través de todas las variables cambiando el eje x
 
@@ -140,12 +152,14 @@ for (i in seq_along(variables)) { #seq_along es usado para después poder nombra
 
   plot_list[[i]] <- p   #Guardando lista de gráficos
 }
- 
+
 #*EL CÓDIGO DE ABAJO PUEDE DEMORAR MINUTOS EN TERMINAR
 start_time_plot_grid <- Sys.time()
-plot_grid(plotlist = plot_list)
+comparacion_by_popularidad <- plot_grid(plotlist = plot_list)
+save_plot(comparacion_by_popularidad, "comparacion_popularidad_vs_todas_las_variables.png")
 end_time_plot_grid <- Sys.time()
 time_taken_plot_grid <- end_time_plot_grid - start_time_plot_grid
-cat("Time taken by plot_grid:", time_taken_plot_grid, "seconds.\n")
+cat("Tiempo usado para hacer el gráfico:", time_taken_plot_grid, "segundos.\n")
 #! En mi caso tomó mas de 15 minutos.
+
 #!Notar datos atípicos con dance = tempo = energy pero con popularidad alta
