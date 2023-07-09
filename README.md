@@ -33,7 +33,7 @@ top 100 songs.
 
 # Equipo : gatito explosion.jpg  <img src= "https://media.discordapp.net/attachments/903024711485775882/1118194764735582329/gato.jpg" width = "50" height = "50" />
 * [evilla8](https://github.com/evilla8)
-* [Montel7u]([link](https://github.com/Montel7u))
+* [Montel7u](https://github.com/Montel7u)
 * [Mathias](https://github.com/mathitorres1)
 * [user](link)
 
