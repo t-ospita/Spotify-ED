@@ -10,7 +10,7 @@ packages <- function(...) {
 }
 
 packages(c("GGally", "readr", "ggplot2", "dplyr",
-          "tidyverse", "tibble", "reshape2", 
+          "tidyverse", "tibble", "reshape2",
           "hrbrthemes", "cowplot", "ggpointdensity"))
 
 #Función para guardar gráfico:
@@ -67,7 +67,7 @@ ggplot(spotify, aes(x = out, y = pop, color = out)) +
   geom_boxplot() +
   labs(x = "¿Atípico?", y = "Popularidad") +
   stat_summary(fun = mean, color = "black", shape = 10)
-histograma_ordenado_out <- 
+histograma_ordenado_out <-
 ggplot(spotify, aes(x = pop, fill = out)) +
   geom_histogram() +
   labs(x = "Popularidad", fill = "Atípico")
@@ -105,7 +105,7 @@ col_og <- nrow(spotify)
 spotify <- subset(spotify, !duplicated(paste(artists, name)))
 #Restando cantidad de observaciones viejas con cantidad de observaciones nuevas
 col_og - nrow(spotify)
-#Quedan eliminadas 13304 observaciones
+#Quedan eliminadas 13678 observaciones
 
 #cambio de rango en la variable loudness, para pasar de -60/0 a 40/100, y redondear
 spotify$loudness <- round(spotify$loudness + 100, 0)
@@ -113,7 +113,6 @@ spotify$loudness <- round(spotify$loudness + 100, 0)
 #no mostrar instrumentalness como formatio cientifico
 spotify$instr <- format(spotify$instr, scientific = FALSE)
 spotify$instr <- as.numeric(spotify$instr)
-spotify$instr <- round(spotify$instr, 2)
 
 #! Creando columnas con décadas
 spotify$decada <- NA
@@ -144,22 +143,16 @@ for (i in seq_along(variables)) { #seq_along es usado para después poder nombra
   var <- variables[i] #Toma el elemento i de Variables
 
   p  <- ggplot(spotify, aes(x = .data[[var]], y = pop)) +
-  geom_pointdensity(size = 2) + scale_color_viridis_c() #Notar: se colorea basado en la densidad de puntos.
+  geom_pointdensity(size = 2, method = "kde2d") +
+  scale_color_viridis_c(name = "", guide = "none") + #Hay que quitar guide porque plot_grid automaticamente reduce la escala del eje x
+  theme_minimal()
+  
+  plot_name <- paste0("comparacion_de_", var, "_con_pop.png") #Creando el nombre del gráfico i
+  ggsave(file.path("plot", "limpieza", "comparacion", plot_name), plot = p) #Guardando cada gráfico de forma separadai:
 
-  #Guardando cada gráficos de forma separada en formato p_i:
-  plot_name <- paste0("p_", i) #Creando el nombre del gráfico i
-  assign(plot_name, p) #Asignando el nombre al gráfico correspondiente
-
-  plot_list[[i]] <- p   #Guardando lista de gráficos
+  plot_list[[i]] <- p #Guardando en una lista para intentar graficar todos los plots juntos
 }
 
-#*EL CÓDIGO DE ABAJO PUEDE DEMORAR MINUTOS EN TERMINAR
-start_time_plot_grid <- Sys.time()
-comparacion_by_popularidad <- plot_grid(plotlist = plot_list)
-save_plot(comparacion_by_popularidad, "comparacion_popularidad_vs_todas_las_variables.png")
-end_time_plot_grid <- Sys.time()
-time_taken_plot_grid <- end_time_plot_grid - start_time_plot_grid
-cat("Tiempo usado para hacer el gráfico:", time_taken_plot_grid, "segundos.\n")
-#! En mi caso tomó mas de 15 minutos.
-
-#!Notar datos atípicos con dance = tempo = energy pero con popularidad alta
+#Guardando el gráfico
+plot_grid(plotlist = plot_list)
+ggsave(file.path("plot", "limpieza", "comparacion_popularidad_vs_todas_las_variables.png"))
