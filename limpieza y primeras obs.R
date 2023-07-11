@@ -11,7 +11,8 @@ packages <- function(...) {
 
 packages(c("GGally", "readr", "ggplot2", "dplyr",
           "tidyverse", "tibble", "reshape2",
-          "hrbrthemes", "cowplot", "ggpointdensity"))
+          "hrbrthemes", "cowplot", "ggpointdensity",
+          "data.table"))
 
 #Función para guardar gráfico:
 plot_save <- function(plot_objeto, filename) {
@@ -137,7 +138,6 @@ plot_save(heatmap_spotify, "heatmap_variables.png")
 
 variables <- names(spotify)[sapply(spotify, is.numeric)]
 plot_list <- list()
-start_time <- Sys.time()
 #Definiendo el foor loop
 for (i in seq_along(variables)) { #seq_along es usado para después poder nombrar los gráficos
   var <- variables[i] #Toma el elemento i de Variables
@@ -148,11 +148,32 @@ for (i in seq_along(variables)) { #seq_along es usado para después poder nombra
   theme_minimal()
   
   plot_name <- paste0("comparacion_de_", var, "_con_pop.png") #Creando el nombre del gráfico i
-  ggsave(file.path("plot", "limpieza", "comparacion", plot_name), plot = p) #Guardando cada gráfico de forma separadai:
+  #ggsave(file.path("plot", "limpieza", "comparacion", plot_name), plot = p) #Guardando cada gráfico de forma separadai:
 
   plot_list[[i]] <- p #Guardando en una lista para intentar graficar todos los plots juntos
 }
 
-#Guardando el gráfico
+#Guardando el gráfico (!DEMORA MUCHO EN GRAFICAR)
 plot_grid(plotlist = plot_list)
 ggsave(file.path("plot", "limpieza", "comparacion_popularidad_vs_todas_las_variables.png"))
+
+#! Notar atípicos: -tempo 0 y mucha pop, -dance 0 y mucha pop.
+#Hay que ver que son esas "canciones"
+spotify0 <- subset(spotify, tempo == 0 & pop > 50)
+head(spotify0, 10)
+nrow(spotify0)
+spotify01 <- subset(spotify, dance == 0 & pop > 50)
+head(spotify01, 10)
+nrow(spotify01)
+identical(spotify0, spotify01)
+
+#Se puede concluir que, los que tienen mayor popularidad, son ruido o no son canciones como tal
+#Eliminar todas las "canciones" con dance == 0
+spotify <- subset(spotify, tempo != 0 )
+col_og - nrow(spotify) #Eliminamos 13817 canciones
+nrow(subset(spotify, dance == 0)) #Chequeando que se hayan eliminado las canciones con dance = 0
+
+#Guardando el dataframe en un nuevo .csv
+
+fwrite(spotify, "clean_data.csv")
+#* Queda todo listo para analizar los datos
