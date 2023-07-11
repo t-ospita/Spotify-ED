@@ -2,28 +2,30 @@ library(readr)
 library(ggplot2)
 library(dplyr)
 library(GGally)
+library(ggthemes)
+library(patchwork)
 
 #CARGA DE CSV EN VARIABLE SPOTIFY
 spotify <- read.csv("data.csv")
 
+------------------------------------------------
+#FILTRAR Y ORDENAR TABLA, VALORES, NOMBRES, FORMATOS, ETC
+------------------------------------------------
+  
 #ELIMINAR ALGUNAS VARIABLES
-spotify <- subset(spotify, select = -c(id, release_date))
+spotify <- subset(spotify, select = -c(id, release_date, key, mode))
 
 #CAMBIAR NOMBRES DE ALGUNAS VARIABLES
 spotify <- spotify %>% rename(Artist1 = artists, instr = instrumentalness, 
                               duration = duration_ms, pop = popularity, 
                               dance = danceability, speech = speechiness, acoust = acousticness)
 
-#CORREGIR EL NOMBRE DEL ARTISTA PARA QUITAR [', ', y ']
+#CORREGIR EL NOMBRE DEL ARTISTA PARA QUITAR SIMBOLOS EXTRAÑOS [', ', '], [", ", y "]
 spotify$Artist1 <- gsub("\\['|'|'\\]", "", spotify$Artist1)
-
-#CORREGIR EL NOMBRE DEL ARTISTA PARA QUITAR [", ", y "]
 spotify$Artist1 <- gsub("\\[\"|\"\\]", "", spotify$Artist1)
-
-#CORREGIR EL NOMBRE DEL ARTISTA PARA QUITAR "
 spotify$Artist1 <- gsub('"', "", spotify$Artist1)
 
-#PASAR TODO A MINUSCULAS PARA FACILITAR FILTRADO
+#PASAR ARTISTA Y CANCION A MINUSCULAS PARA FACILITAR FILTRADO
 spotify$Artist1 <- sapply(spotify$Artist1, tolower)
 spotify$name <- sapply(spotify$name, tolower)
 
@@ -31,35 +33,15 @@ spotify$name <- sapply(spotify$name, tolower)
 spotify <- subset(spotify, !duplicated(paste(Artist1, name)))
 
 #REORDENANDO COLUMNAS
-spotify <- spotify[, c("Artist1", "name", "year", "duration", "explicit", "pop", "dance", "instr", "acoust", "speech", "liveness", "energy", "loudness", "valence", "tempo", "key", "mode" )]
+spotify <- spotify[, c("Artist1", "name", "year", "duration", "explicit", "pop", "dance", "instr", "acoust", "speech", "liveness", "energy", "loudness", "valence", "tempo" )]
 
-#CAMBIANDO VALORES DE LA COLUMNA "MODE"
-spotify$mode <- ifelse(spotify$mode == 0, "Menor", "Mayor")
-spotify$mode <- as.factor(spotify$mode)
-
-#CAMIANDO VALORES DE LA COLUMNA "EXPLICIT"
-spotify$explicit <- ifelse(spotify$explicit == 0, "No", "Si")
-spotify$explicit <- as.factor(spotify$explicit)
-
-#REDONDEAR TEMPO (BPM)
+#REDONDEAR VARIABLES
 spotify$tempo <- round(spotify$tempo, 0)
-
-#REDONDEAR VALENCE
 spotify$valence <- round(spotify$valence, 2)
-
-#REDONDEAR DANCE
 spotify$dance <- round(spotify$dance, 2)
-
-#REDONDEAR ACOUST
 spotify$acoust <- round(spotify$acoust, 2)
-
-#REDONDEAR LIVENESS
 spotify$liveness <- round(spotify$liveness, 2)
-
-#REDONDEAR ENERGY
 spotify$energy <- round(spotify$energy, 2)
-
-#REDONDEAR SPEECHNESS
 spotify$speech <- round(spotify$speech, 2)
 
 #CAMBIO DE RANGO EN LA VARIABLE LOUDNESS, PARA PASAR DE -60/0 A 40/100, Y REDONDEAR
@@ -81,7 +63,10 @@ convert <- function(duration) {
 spotify$duration <- sapply(spotify$duration, convert)
 spotify$duration <- as.numeric(spotify$duration)
 rm(convert)
--------------------------------
+
+--------------------------------------
+#ANALIZAR Y BORRAR ATÍPICOS  Y OTROS DATOS QUE DETECTEMOS QUE NO CORRESPONDEN
+--------------------------------------
   
 summary(spotify$duration)
 q1 <- quantile(spotify$duration, 0.25)
@@ -92,30 +77,100 @@ superior <- q3 + (1.5*rango) #da 6.8, bastante parecido al 7 de Tadeo
 #vector con valores atípicos
 #atipicos <- boxplot.stats(spotify$duration)$out
 
-#ELIMINAR ATIPICOS DE LA TABLA - pasa de 156231 a 149037
-spotify <- subset(spotify, duration <= superior)
-
-#ELIMINAR MENORES A 1 MINUTO - pasa de 149037 a 147585
-spotify <- subset(spotify, duration >= 1)
+#ELIMINAR ATIPICOS DE LA TABLA Y MENORES A 1 - pasa de 156231 a 147585
+spotify <- subset(spotify, duration <= superior & duration >= 1)
 rm(q1, q3, rango, superior)
+#BORRAR A ERNEST HEMINGWAY (AUDIOLIBROS EN RUSO) - BAJA DE 147585 A 146371
+spotify <- spotify %>% filter(Artist1 != "эрнест хемингуэй")
+#BORRAR A ERICH MARIA REMARQUE (AUDIOLIBROS EN RUSO) - BAJA DE XXXXXX A XXXXXX
+spotify <- spotify %>% filter(Artist1 != "эрих мария ремарк")
+#BORRAR A SEWERYN GOSZCZYNSKI (PODCAST POLACO) - BAJA DE XXXXXX A 145514
+spotify <- spotify %>% filter(Artist1 != "seweryn goszczyński")
+
+#CREANDO LA COPIA PARA EL OTRO ANALISIS
+spotifyprom <- spotify
+
+-------------------------------------
+#ANALISIS DE COMO FUERON CAMBIANDO LAS CANCIONES A LO LARGO DE LOS AÑOS (USANDO "spotifyprom")
+-------------------------------------
+  
+spotifyprom$year <-     ifelse(spotifyprom$year >= 1920 & spotifyprom$year < 1925, 1920,
+                        ifelse(spotifyprom$year >= 1925 & spotifyprom$year < 1930, 1925,
+                        ifelse(spotifyprom$year >= 1930 & spotifyprom$year < 1935, 1930,
+                        ifelse(spotifyprom$year >= 1935 & spotifyprom$year < 1940, 1935,
+                        ifelse(spotifyprom$year >= 1940 & spotifyprom$year < 1945, 1940,
+                        ifelse(spotifyprom$year >= 1945 & spotifyprom$year < 1950, 1945,
+                        ifelse(spotifyprom$year >= 1950 & spotifyprom$year < 1955, 1950,
+                        ifelse(spotifyprom$year >= 1955 & spotifyprom$year < 1960, 1955,
+                        ifelse(spotifyprom$year >= 1960 & spotifyprom$year < 1965, 1960,
+                        ifelse(spotifyprom$year >= 1965 & spotifyprom$year < 1970, 1965,
+                        ifelse(spotifyprom$year >= 1970 & spotifyprom$year < 1975, 1970,
+                        ifelse(spotifyprom$year >= 1975 & spotifyprom$year < 1980, 1975,
+                        ifelse(spotifyprom$year >= 1980 & spotifyprom$year < 1985, 1980,
+                        ifelse(spotifyprom$year >= 1985 & spotifyprom$year < 1990, 1985,
+                        ifelse(spotifyprom$year >= 1990 & spotifyprom$year < 1995, 1990,
+                        ifelse(spotifyprom$year >= 1995 & spotifyprom$year < 2000, 1995,
+                        ifelse(spotifyprom$year >= 2000 & spotifyprom$year < 2005, 2000,
+                        ifelse(spotifyprom$year >= 2005 & spotifyprom$year < 2010, 2005,
+                        ifelse(spotifyprom$year >= 2010 & spotifyprom$year < 2015, 2010,
+                        ifelse(spotifyprom$year >= 2015 & spotifyprom$year < 2020, 2015,
+                        ifelse(spotifyprom$year >= 2020 & spotifyprom$year < 2023, 2020, 0000)))))))))))))))))))))
+
+#PROMEDIANDO TODAS LAS OBSERVACIONES QUE COMPARTAN YEAR 
+varsec <- c("duration", "explicit", "pop", "dance", "instr", "acoust", "speech", "liveness", "energy", "loudness", "valence", "tempo")
+prom <- aggregate(. ~ year, data = spotifyprom[, c("year", varsec)], FUN = mean)
+prom[, varsec] <- lapply(prom[, varsec], round, digits = 2)
+prom$tempo <- round(prom$tempo, 0)
+prom$pop <- round(prom$pop, 0)
+prom$loudness <- round(prom$loudness, 0)
+rm(varsec)
+
+
+p <- prom %>% ggplot(aes(year, acoust)) + geom_path(color = "orange") + geom_point(size = 2) + scale_x_continuous(breaks = c(1940, 1980, 2020)) + 
+ylim(0,1) + theme_economist() + ggtitle("Qué tan acústica es una canción según el año:") + 
+theme(plot.title = element_text(size = 14))+ xlab(expression(bold("Año"))) + ylab(expression(bold("Nivel de Acústica:"))) + 
+theme(axis.title.x = element_text(margin = margin(t = 5)), axis.title.y = element_text(margin = margin (r=5)), plot.margin = margin(25, 25, 25, 25), plot.title = element_text(margin = margin(b = 20)))
+
+ggsave("acoust.png", plot = p, width = 10, height = 6)
+
+q <- prom %>% ggplot(aes(year, energy)) + geom_path(color = "orange") + geom_point(size = 2) + scale_x_continuous(breaks = c(1940, 1980, 2020)) + 
+ylim(0,1) + theme_economist() + ggtitle("Nivel de intensidad y actividad de una canción según el año:") + 
+theme(plot.title = element_text(size = 14))+ xlab(expression(bold("Año"))) + ylab(expression(bold("Nivel de Energía:"))) + 
+theme(axis.title.x = element_text(margin = margin(t = 5)), axis.title.y = element_text(margin = margin (r=5)), plot.margin = margin(25, 25, 25, 25), plot.title = element_text(margin = margin(b = 20)))
+
+ggsave("energy.png", plot = q, width = 10, height = 6)
+
+r <- prom %>% ggplot(aes(year, explicit)) + geom_path(color = "orange") + geom_point(size = 2) + scale_x_continuous(breaks = c(1940, 1980, 2020)) + 
+ylim(0,1) + theme_economist() + ggtitle("Porcentaje de canciones con lenguaje explícito según el año:") + 
+theme(plot.title = element_text(size = 14))+ xlab(expression(bold("Año"))) + ylab(expression(bold("Explicit"))) + 
+theme(axis.title.x = element_text(margin = margin(t = 5)), axis.title.y = element_text(margin = margin (r=5)), plot.margin = margin(25, 25, 25, 25), plot.title = element_text(margin = margin(b = 20)))
+
+ggsave("explicit.png", plot = r, width = 10, height = 6)
+
+s <- prom %>% ggplot(aes(year, instr)) + geom_path(color = "orange") + geom_point(size = 2) + scale_x_continuous(breaks = c(1940, 1980, 2020)) + 
+ylim(0,1) + theme_economist() + ggtitle("Nivel de instrumentalidad de una canción según el año:") + 
+theme(plot.title = element_text(size = 14))+ xlab(expression(bold("Año"))) + ylab(expression(bold("Instrumentalidad"))) + 
+theme(axis.title.x = element_text(margin = margin(t = 5)), axis.title.y = element_text(margin = margin (r=5)), plot.margin = margin(25, 25, 25, 25), plot.title = element_text(margin = margin(b = 20)))
+
+ggsave("instr.png", plot = s, width = 10, height = 6)
+
+t <- prom %>% ggplot(aes(year, loudness)) + geom_path(color = "orange") + geom_point(size = 2) + scale_x_continuous(breaks = c(1940, 1980, 2020)) + 
+ylim(0,100) + theme_economist() + ggtitle("Volumen en decibeles de una canción según el año:") + 
+theme(plot.title = element_text(size = 14))+ xlab(expression(bold("Año"))) + ylab(expression(bold("Volumen en decibeles"))) + 
+theme(axis.title.x = element_text(margin = margin(t = 5)), axis.title.y = element_text(margin = margin (r=5)), plot.margin = margin(25, 25, 25, 25), plot.title = element_text(margin = margin(b = 20)))
+
+ggsave("loudness.png", plot = t, width = 10, height = 6)
+
+mix <- (p + q) / (r + s)
+ggsave("zmix.png", plot = mix, width = 20, height = 10)
+
+rm(p, q, r, s, t, mix, zmix)
 -------------------------------------
 
-#NUEVA COLUMNA SOBRE DATO ATÍPICO
-#spotify$out <- ifelse(spotify$duration > superior, "Si", "No")
-#spotify$out <- as.factor(spotify$out)
 
-#GRAFICA COMPARACION POP Y ATIPICO
-#ggplot(spotify, aes(x = out, y = pop, color = out)) +
-  #geom_boxplot()+
-  #labs(x = "¿Atípico?", y = "Popularidad")
-#ggplot(spotify, aes(x=pop, fill = out)) +
-  #geom_histogram() +
-  #labs(x = "Popularidad", fill = "Atípico")
-
-#OTRO GRAFICO (NO ME CARGÓ POR LA CANTIDAD DE DATOS)
-#spotify %>% ggplot(aes(duration, pop)) + geom_point() + facet_grid(. ~ out)
-
------------------------------
+-------------------------------------
+#ANALISIS DE LOS ARTISTAS MAS POPULARES (USANDO "spotify")
+-------------------------------------
 #SEPARAR EN N COLUMNAS LOS N ARTISTAS DE CADA CANCION. SI ES UN ARTISTA SOLO, QUE MUESTRE NA EN EL RESTO 
 separar_Artist1 <- function(Artist1) {
   sep <- strsplit(Artist1, ", ")
@@ -137,78 +192,11 @@ if (i <= 3) {
 }
 
 #REORDENAR COLUMNAS NUEVAMENTE
-spotify <- spotify[, c("Artist1", "Artist2", "Artist3", "name", "year", "duration", "explicit", "pop", "dance", "instr", "acoust", "speech", "liveness", "energy", "loudness", "valence", "tempo", "key", "mode" )]
-
+spotify <- spotify[, c("Artist1", "Artist2", "Artist3", "name", "year", "duration", "explicit", "pop", "dance", "instr", "acoust", "speech", "liveness", "energy", "loudness", "valence", "tempo")]
+respaldo <- spotify
 #BORRAR DE ARTIST1 EL RESTO DE ARTISTAS QUE NO QUIERO
 spotify$Artist1 <- sub(",.*", "", spotify$Artist1)
 rm(col_name, i, maxnom, separar_Artist1)
-
------------------------------------------------------------
-#TOMANDO SOLO ARTIST1
-
-#length(unique(spotify$Artist1)) - DA 19316 ASI QUE HAY 19316 ARTISTAS DIFERENTES EN ARTIST1
-#NUEVA TABLA CON LOS PROMEDIOS DE LAS CANCIONES DE CADA ARTISTA
-#varsec <- c("year", "duration", "pop", "dance", "instr", "acoust", "speech", "liveness", "energy", "loudness", "valence", "tempo")
-#freq <- table(spotify$Artist1)
-#validos <- names(freq[freq >= 20])
-#filtrados <- spotify[spotify$Artist1 %in% validos, ] #EN FILTRADOS QUEDAN SOLAMENTE LOS ARTISTAS QUE TIENEN MAS DE "FREQ" CANCIONES EN "SPOTIFY"
-#prom <- aggregate(. ~ Artist1, data = filtrados[, c("Artist1", varsec)], FUN = mean)
-#prom[, varsec] <- lapply(prom[, varsec], round, digits = 2)
-#prom$year <- round(prom$year, 0)
-#prom$tempo <- round(prom$tempo, 0)
-#prom$pop <- round(prom$pop, 0)
-#prom$loudness <- round(prom$pop, 0)
-----------------------------------------------------------
-  
-#TOMANDO SOLO ARTIST2
-
-#length(unique(spotify$Artist2)) - DA 7747 ASI QUE HAY 7747 ARTISTAS DIFERENTES EN ARTIST1
-#NUEVA TABLA CON LOS PROMEDIOS DE LAS CANCIONES DE CADA ARTISTA
-# varsec <- c("year", "duration", "pop", "dance", "instr", "acoust", "speech", "liveness", "energy", "loudness", "valence", "tempo")
-# freq <- table(spotify$Artist2)
-# validos <- names(freq[freq >= 20])
-# filtrados <- spotify[spotify$Artist2 %in% validos, ] #EN FILTRADOS QUEDAN SOLAMENTE LOS ARTISTAS QUE TIENEN MAS DE "FREQ" CANCIONES EN "SPOTIFY"
-# prom <- aggregate(. ~ Artist2, data = filtrados[, c("Artist2", varsec)], FUN = mean)
-# prom[, varsec] <- lapply(prom[, varsec], round, digits = 2)
-# prom$year <- round(prom$year, 0)
-# prom$tempo <- round(prom$tempo, 0)
-# prom$pop <- round(prom$pop, 0)
-# prom$loudness <- round(prom$pop, 0)
-
---------------------------------------------------------------
-#TOMANDO TANTO ARTIST1 COMO ARTIST2 - EN TOTAL SON 24004 QUE APARECEN AL MENOS UNA VEZ EN ARTIST1 O ARTISTS2
-  
-# varsec <- c("year", "duration", "pop", "dance", "instr", "acoust", "speech", "liveness", "energy", "loudness", "valence", "tempo")
-# freq1 <- table(spotify$Artist1)
-# freq2 <- table(spotify$Artist2)
-# #AGREGAR LAS FREQ DE ARTIST2 A FREQ1
-# for (artist in names(freq2)) {
-#   if (artist %in% names(freq1)) {
-#     freq1[artist] <- freq1[artist] + freq2[artist]
-#   } else {
-#     freq1[artist] <- freq2[artist]
-#   }
-# }
-# rm(freq2, artist)
-# validos <- names(freq1[freq1 >= 20])
-# 
-# filtrados1 <- spotify[spotify$Artist1 %in% validos, ]
-# filtrados1 <- subset(filtrados1, select = -c(Artist2, Artist3))
-# 
-# filtrados2 <- spotify[spotify$Artist2 %in% validos, ]
-# filtrados2 <- subset(filtrados2, select = -c(Artist1, Artist3))
-# 
-# names(filtrados2)[names(filtrados2) == "Artist2"] <- "Artist1"
-# 
-# filtrados <- rbind(filtrados1, filtrados2)
-# rm(filtrados1, filtrados2)
-# 
-# prom <- aggregate(. ~ Artist1, data = filtrados[, c("Artist1", varsec)], FUN = mean)
-# prom[, varsec] <- lapply(prom[, varsec], round, digits = 2)
-# prom$year <- round(prom$year, 0)
-# prom$tempo <- round(prom$tempo, 0)
-# prom$pop <- round(prom$pop, 0)
-# prom$loudness <- round(prom$loudness, 0)
 
 ----------------------------------------------
 #TOMANDO TANTO ARTIST1, ARTIST2, ARTIST3 - EN TOTAL SON XXXX QUE APARECEN AL MENOS UNA VEZ EN ARTIST1 O ARTISTS2
@@ -239,14 +227,9 @@ for (artist in names(freq2)) {
 rm(freq2, artist)
 validos <- names(freq1[freq1 >= 20])
 
-filtrados1 <- spotify[spotify$Artist1 %in% validos, ]
-filtrados1 <- subset(filtrados1, select = -c(Artist2, Artist3))
-
-filtrados2 <- spotify[spotify$Artist2 %in% validos, ]
-filtrados2 <- subset(filtrados2, select = -c(Artist1, Artist3))
-
-filtrados3 <- spotify[spotify$Artist3 %in% validos, ]
-filtrados3 <- subset(filtrados3, select = -c(Artist1, Artist2))
+filtrados1 <- subset(spotify, Artist1 %in% validos, select = -c(Artist2, Artist3))
+filtrados2 <- subset(spotify, Artist2 %in% validos, select = -c(Artist1, Artist3))
+filtrados3 <- subset(spotify, Artist3 %in% validos, select = -c(Artist1, Artist2))
 
 names(filtrados2)[names(filtrados2) == "Artist2"] <- "Artist1"
 names(filtrados3)[names(filtrados3) == "Artist3"] <- "Artist1"
@@ -254,98 +237,58 @@ names(filtrados3)[names(filtrados3) == "Artist3"] <- "Artist1"
 filtrados <- rbind(filtrados1, filtrados2, filtrados3)
 rm(filtrados1, filtrados2, filtrados3)
 
-prom <- aggregate(. ~ Artist1, data = filtrados[, c("Artist1", varsec)], FUN = mean)
-prom[, varsec] <- lapply(prom[, varsec], round, digits = 2)
-prom$year <- round(prom$year, 0)
-prom$tempo <- round(prom$tempo, 0)
-prom$pop <- round(prom$pop, 0)
-prom$loudness <- round(prom$loudness, 0)
+#SI QUIERO SOLAMENTE UNA LINEA POR CADA ARTISTA, PROMEDIANDO TODAS SUS CANCIONES
+#pops <- aggregate(. ~ Artist1, data = filtrados[, c("Artist1", varsec)], FUN = mean)
+#SI QUIERO UNA LINEA POR ARTISTA Y POR AÑO (17162 OBSERVACIONES - ME TRAE A BEETHOVEN COMO EL MÁS POPULAR DEL 2007, CON UNA SOLA CANCION)
+#pops <- aggregate(. ~ Artist1 + year, data = filtrados[, c("Artist1", varsec)], FUN = mean)
+
+#SI QUIERO UNA LINEA POR ARTISTA Y POR AÑO PARA AQUELLOS QUE TENGAN MÁS DE 3 CANCIONES EN UN AÑO, Y BORRAR EL RESTO (QUEDAN 9632) 
+art3 <- filtrados %>% group_by(Artist1, year) %>% filter(n() >= 3)
+pops <- aggregate(. ~ Artist1 + year, data = art3[, c("Artist1", varsec)], FUN = mean)
+pops[, varsec] <- lapply(pops[, varsec], round, digits = 2)
+pops$year <- round(pops$year, 0)
+pops$tempo <- round(pops$tempo, 0)
+pops$pop <- round(pops$pop, 0)
+pops$loudness <- round(pops$loudness, 0)
 rm(filtrados, freq1, validos, varsec)
 
-prom$decada <- NA
-prom$decada <- floor(prom$year / 10) * 10
-prom$decada <- as.factor(prom$decada)
-prom$year <- NULL
-prom <- prom[, c("Artist1", "decada", "duration", "pop", "dance", "instr", "acoust", "speech", "liveness", "energy", "loudness", "valence", "tempo")]
+#pops$decada <- NA
+#pops$decada <- floor(pops$year / 10) * 10
+#pops$decada <- as.factor(pops$decada)
+pops <- pops[, c("Artist1", "year", "duration", "pop", "dance", "instr", "acoust", "speech", "liveness", "energy", "loudness", "valence", "tempo")]
 
 --------------------------------------
-#SEPARAR DATA FRAME POR DECADA 
-prom2010_2020 <- prom %>% filter(year >= 2010)
-prom2000_2009 <- prom %>% filter(year >= 2000 & year < 2010)
-prom1990_1999 <- prom %>% filter(year >= 1990 & year < 2000)
-prom1980_1989 <- prom %>% filter(year >= 1980 & year < 1990)
-prom1970_1979 <- prom %>% filter(year >= 1970 & year < 1980)
-prom1960_1969 <- prom %>% filter(year >= 1960 & year < 1970)
-prom1950_1959 <- prom %>% filter(year >= 1950 & year < 1960)
-prom1940_1949 <- prom %>% filter(year >= 1940 & year < 1950)
-prom1930_1939 <- prom %>% filter(year >= 1930 & year < 1940)
-prom1920_1929 <- prom %>% filter(year >= 1920 & year < 1930)
-rm(prom)
 
--------------------------
+max_pop <- aggregate(pop ~ year, data = pops, FUN = max)
+
+# Mostrar los resultados como texto
+for (i in 1:nrow(max_pop)) {
+  año <- max_pop$year[i]
+  max_valor <- max_pop$pop[i]
+  artist <- pops$Artist1[pops$year == año & pops$pop == max_valor]
+  cat("El artista más popular de", año, "es", artist, "\n")
+}
+
+--------------------------------------
+
 #AHORA SÍ PODRIA BUSCAR LOS ARTISTAS SIMILARES A OTRO YA QUE EN PROM QUEDÓ UNA LINEA POR ARTISTA
-vv <- 3:13
-ggcorr(prom[, vv])
 
-distancias <- as.matrix(dist(prom[, vv]))
-dim(distancias)                        
+  ggcorr(pops[, vv])
 
-badbunny <- which((prom$Artist1 == "maroon 5"))
+  vv <- 3:13
 
-bbsimilares <- data.frame(
-  Artist = prom$Artist1,
-  distancia_to_bb = distancias[, badbunny]
+distancias <- as.matrix(dist(pops[, vv]))
+
+artista <- which((pops$Artist1 == "ariana grande"))
+
+similares <- data.frame(
+  Artist1 = pops$Artist1,
+  distancia_to_bb = distancias[, artista]
 )
 
-bbsimilares$dd <- with(bbsimilares, reorder(Artist, distancia_to_bb))
+similares$dd <- with(similares, reorder(Artist1, distancia_to_bb))
 
-ggplot(subset(bbsimilares, subset = rank(distancia_to_bb) < 11)) + geom_point(aes(distancia_to_bb, dd)) + 
-  labs(y = "") + theme(axis.title.y = element_text(size = I(15)))
+ggplot(subset(similares, subset = rank(distancia_to_bb) < 11)) + geom_point(aes(distancia_to_bb, dd)) + 
+labs(y = "") + theme(axis.title.y = element_text(size = I(15)))
 
---------------------------------------
-#CAMBIO DE NOMBRES EN COLUMNA YEAR
-#spotify$year <- ifelse(spotify$year >= 1920 & spotify$year <= 1929, "1920s", spotify$year)
-#spotify$year <- ifelse(spotify$year >= 1930 & spotify$year <= 1939, "1930s", spotify$year)
-#spotify$year <- ifelse(spotify$year >= 1940 & spotify$year <= 1949, "1940s", spotify$year)
-#spotify$year <- ifelse(spotify$year >= 1950 & spotify$year <= 1959, "1950s", spotify$year)
-#spotify$year <- ifelse(spotify$year >= 1960 & spotify$year <= 1969, "1960s", spotify$year)
-#spotify$year <- ifelse(spotify$year >= 1970 & spotify$year <= 1979, "1970s", spotify$year)
-#spotify$year <- ifelse(spotify$year >= 1980 & spotify$year <= 1989, "1980s", spotify$year)
-#spotify$year <- ifelse(spotify$year >= 1990 & spotify$year <= 1999, "1990s", spotify$year)
-#spotify$year <- ifelse(spotify$year >= 2000 & spotify$year <= 2009, "2000s", spotify$year)
-#spotify$year <- ifelse(spotify$year >= 2010 & spotify$year <= 2019, "2010s", spotify$year)
-#spotify$year <- ifelse(spotify$year >= 2020 & spotify$year <= 2029, "2020s", spotify$year)
-
-#spotify %>% ggplot(aes(x = year, y = pop)) + geom_point()
-
-#TODO ESTO ME CREÓ 40 COLUMNAS DE ARTISTAS YA QUE HAY UNA CANCION CON 40 ARTISTAS
-#SEPARAR EN N COLUMNAS LOS N ARTISTAS DE CADA CANCION. SI ES UN ARTISTA SOLO, QUE MUESTRE NA EN EL RESTO 
-#separar_artists <- function(artists) {
-  #sep <- strsplit(artists, ", ")
-  #if (length(sep[[1]]) > 1) {
-    #return(sep[[1]][-1])
-  #} else {
-    #return (NA)
-  #}
-#}
-#MAXIMO DE NOMBRES A SEPARAR EN ARTISTS
-#maxnom <- max(sapply(spotify$artists, function (x) length(strsplit(x, ", ")[[1]])))
-#CREAR COLUMNAS ADICIONALES
-#for (i in 2:maxnom) {
-  #col_name <- paste0("artist", i)
-  #spotify[[col_name]] <- sapply(spotify$artists, function(x) separar_artists(x)[i-1])
-#}
-
---------------------------------
-#CUAL ES MAS POPULAR POR CADA DECADA
-# prom %>% filter(year >= 1920 & year < 1930) %>% slice_max(order_by = pop) %>% pull(Artist1)
-# prom %>% filter(year >= 1930 & year < 1940) %>% slice_max(order_by = pop) %>% pull(Artist1)
-# prom %>% filter(year >= 1940 & year < 1950) %>% slice_max(order_by = pop) %>% pull(Artist1)
-# prom %>% filter(year >= 1950 & year < 1960) %>% slice_max(order_by = pop) %>% pull(Artist1)
-# prom %>% filter(year >= 1960 & year < 1970) %>% slice_max(order_by = pop) %>% pull(Artist1)
-# prom %>% filter(year >= 1970 & year < 1980) %>% slice_max(order_by = pop) %>% pull(Artist1)
-# prom %>% filter(year >= 1980 & year < 1990) %>% slice_max(order_by = pop) %>% pull(Artist1)
-# prom %>% filter(year >= 1990 & year < 2000) %>% slice_max(order_by = pop) %>% pull(Artist1)
-# prom %>% filter(year >= 2000 & year < 2010) %>% slice_max(order_by = pop) %>% pull(Artist1)
-# prom %>% filter(year >= 2010 & year < 2020) %>% slice_max(order_by = pop) %>% pull(Artist1)
-# --------------------------------------------------
+  
