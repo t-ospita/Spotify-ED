@@ -12,7 +12,7 @@ packages <- function(...) {
 packages(c("GGally", "readr", "ggplot2", "dplyr",
           "tidyverse", "tibble", "reshape2",
           "hrbrthemes", "cowplot", "ggpointdensity",
-          "data.table"))
+          "data.table", "janitor"))
 
 #Función para guardar gráfico:
 plot_save <- function(plot_objeto, filename) {
@@ -83,7 +83,7 @@ spotify$mode <- ifelse(spotify$mode == 0, "Menor", "Mayor")
 spotify$mode <- as.factor(spotify$mode)
 
 #!Eliminar id y release_date (ya tenemos el año)
-spotify <- subset(spotify, select = -c(id, release_date))
+spotify <- subset(spotify, select = -c(release_date))
 
 #!Reordenando columnas
 col_order <- c("artists", "name", "year", "duration", "explicit", "pop", "dance", "instr", "acoust", "speech", "liveness", "energy", "loudness", "valence", "tempo", "key", "mode")
@@ -100,14 +100,11 @@ spotify$artists <- gsub("\\[\"|\"\\]", "", spotify$artists)
 spotify$artists <- sapply(spotify$artists, tolower)
 spotify$name <- sapply(spotify$name, tolower)
 
-#Eliminar donde se repite nombre de artista y cancion
-#Guardando cantidad de observaciones
+#Eliminar duplicados
 col_og <- nrow(spotify)
-spotify <- subset(spotify, !duplicated(paste(artists, name)))
+spotify <- anti_join(spotify, get_dupes(spotify)) #Notar que los duplicados fueron eliminados así porque duplicated traía problemas
 #Restando cantidad de observaciones viejas con cantidad de observaciones nuevas
 col_og - nrow(spotify)
-#Quedan eliminadas 13678 observaciones
-
 #cambio de rango en la variable loudness, para pasar de -60/0 a 40/100, y redondear
 spotify$loudness <- round(spotify$loudness + 100, 0)
 
@@ -148,7 +145,7 @@ for (i in seq_along(variables)) { #seq_along es usado para después poder nombra
   theme_minimal()
   
   plot_name <- paste0("comparacion_de_", var, "_con_pop.png") #Creando el nombre del gráfico i
-  #ggsave(file.path("plot", "limpieza", "comparacion", plot_name), plot = p) #Guardando cada gráfico de forma separadai:
+  ggsave(file.path("plot", "limpieza", "comparacion", plot_name), plot = p) #Guardando cada gráfico de forma separadai:
 
   plot_list[[i]] <- p #Guardando en una lista para intentar graficar todos los plots juntos
 }
