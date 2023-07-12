@@ -7,7 +7,6 @@ library(patchwork)
 
 #CARGA DE CSV EN VARIABLE SPOTIFY
 spotify <- read.csv("data.csv")
-
 ------------------------------------------------
 #FILTRAR Y ORDENAR TABLA, VALORES, NOMBRES, FORMATOS, ETC
 ------------------------------------------------
@@ -29,11 +28,15 @@ spotify$Artist1 <- gsub('"', "", spotify$Artist1)
 spotify$Artist1 <- sapply(spotify$Artist1, tolower)
 spotify$name <- sapply(spotify$name, tolower)
 
-#ELIMINAR AQUELLAS DONDE SE REPITE NOMBRE DE ARTISTA Y CANCION - baja de 169909 a 156231
-spotify <- subset(spotify, !duplicated(paste(Artist1, name)))
-
 #REORDENANDO COLUMNAS
 spotify <- spotify[, c("Artist1", "name", "year", "duration", "explicit", "pop", "dance", "instr", "acoust", "speech", "liveness", "energy", "loudness", "valence", "tempo" )]
+# 
+# spotify <- respaldo2
+# respaldo2 <- spotify
+
+#ELIMINAR AQUELLAS DONDE SE REPITE NOMBRE DE ARTISTA Y CANCION - baja de 169909 a 156231
+#spotifydup <- subset(spotify, !duplicated(paste(Artist1, name)))
+spotify <- spotify %>% group_by(Artist1, name) %>% mutate(dup = n()) %>% arrange(desc(pop)) %>% filter(!(dup > 1 & row_number() > 1)) %>% select(-dup)
 
 #REDONDEAR VARIABLES
 spotify$tempo <- round(spotify$tempo, 0)
@@ -131,38 +134,38 @@ ylim(0,1) + theme_economist() + ggtitle("Qué tan acústica es una canción seg�
 theme(plot.title = element_text(size = 14))+ xlab(expression(bold("Año"))) + ylab(expression(bold("Nivel de Acústica:"))) + 
 theme(axis.title.x = element_text(margin = margin(t = 5)), axis.title.y = element_text(margin = margin (r=5)), plot.margin = margin(25, 25, 25, 25), plot.title = element_text(margin = margin(b = 20)))
 
-ggsave("acoust.png", plot = p, width = 10, height = 6)
+ggsave("acoust2.png", plot = p, width = 10, height = 6)
 
 q <- prom %>% ggplot(aes(year, energy)) + geom_path(color = "orange") + geom_point(size = 2) + scale_x_continuous(breaks = c(1940, 1980, 2020)) + 
 ylim(0,1) + theme_economist() + ggtitle("Nivel de intensidad y actividad de una canción según el año:") + 
 theme(plot.title = element_text(size = 14))+ xlab(expression(bold("Año"))) + ylab(expression(bold("Nivel de Energía:"))) + 
 theme(axis.title.x = element_text(margin = margin(t = 5)), axis.title.y = element_text(margin = margin (r=5)), plot.margin = margin(25, 25, 25, 25), plot.title = element_text(margin = margin(b = 20)))
 
-ggsave("energy.png", plot = q, width = 10, height = 6)
+ggsave("energy2.png", plot = q, width = 10, height = 6)
 
 r <- prom %>% ggplot(aes(year, explicit)) + geom_path(color = "orange") + geom_point(size = 2) + scale_x_continuous(breaks = c(1940, 1980, 2020)) + 
 ylim(0,1) + theme_economist() + ggtitle("Porcentaje de canciones con lenguaje explícito según el año:") + 
 theme(plot.title = element_text(size = 14))+ xlab(expression(bold("Año"))) + ylab(expression(bold("Explicit"))) + 
 theme(axis.title.x = element_text(margin = margin(t = 5)), axis.title.y = element_text(margin = margin (r=5)), plot.margin = margin(25, 25, 25, 25), plot.title = element_text(margin = margin(b = 20)))
 
-ggsave("explicit.png", plot = r, width = 10, height = 6)
+ggsave("explicit2.png", plot = r, width = 10, height = 6)
 
 s <- prom %>% ggplot(aes(year, instr)) + geom_path(color = "orange") + geom_point(size = 2) + scale_x_continuous(breaks = c(1940, 1980, 2020)) + 
 ylim(0,1) + theme_economist() + ggtitle("Nivel de instrumentalidad de una canción según el año:") + 
 theme(plot.title = element_text(size = 14))+ xlab(expression(bold("Año"))) + ylab(expression(bold("Instrumentalidad"))) + 
 theme(axis.title.x = element_text(margin = margin(t = 5)), axis.title.y = element_text(margin = margin (r=5)), plot.margin = margin(25, 25, 25, 25), plot.title = element_text(margin = margin(b = 20)))
 
-ggsave("instr.png", plot = s, width = 10, height = 6)
+ggsave("instr2.png", plot = s, width = 10, height = 6)
 
 t <- prom %>% ggplot(aes(year, loudness)) + geom_path(color = "orange") + geom_point(size = 2) + scale_x_continuous(breaks = c(1940, 1980, 2020)) + 
 ylim(0,100) + theme_economist() + ggtitle("Volumen en decibeles de una canción según el año:") + 
 theme(plot.title = element_text(size = 14))+ xlab(expression(bold("Año"))) + ylab(expression(bold("Volumen en decibeles"))) + 
 theme(axis.title.x = element_text(margin = margin(t = 5)), axis.title.y = element_text(margin = margin (r=5)), plot.margin = margin(25, 25, 25, 25), plot.title = element_text(margin = margin(b = 20)))
 
-ggsave("loudness.png", plot = t, width = 10, height = 6)
+ggsave("loudness2.png", plot = t, width = 10, height = 6)
 
 mix <- (p + q) / (r + s)
-ggsave("zmix.png", plot = mix, width = 20, height = 10)
+ggsave("zmix2.png", plot = mix, width = 20, height = 10)
 
 rm(p, q, r, s, t, mix, zmix)
 -------------------------------------
@@ -242,7 +245,7 @@ rm(filtrados1, filtrados2, filtrados3)
 #SI QUIERO UNA LINEA POR ARTISTA Y POR AÑO (17162 OBSERVACIONES - ME TRAE A BEETHOVEN COMO EL MÁS POPULAR DEL 2007, CON UNA SOLA CANCION)
 #pops <- aggregate(. ~ Artist1 + year, data = filtrados[, c("Artist1", varsec)], FUN = mean)
 
-#SI QUIERO UNA LINEA POR ARTISTA Y POR AÑO PARA AQUELLOS QUE TENGAN MÁS DE 3 CANCIONES EN UN AÑO, Y BORRAR EL RESTO (QUEDAN 9632) 
+#SI QUIERO UNA LINEA POR ARTISTA Y POR AÑO PARA AQUELLOS QUE TENGAN MÁS DE 3 CANCIONES EN UN AÑO, Y BORRAR EL RESTO (8256 OBSERVACIONES) 
 art3 <- filtrados %>% group_by(Artist1, year) %>% filter(n() >= 3)
 pops <- aggregate(. ~ Artist1 + year, data = art3[, c("Artist1", varsec)], FUN = mean)
 pops[, varsec] <- lapply(pops[, varsec], round, digits = 2)
@@ -250,7 +253,7 @@ pops$year <- round(pops$year, 0)
 pops$tempo <- round(pops$tempo, 0)
 pops$pop <- round(pops$pop, 0)
 pops$loudness <- round(pops$loudness, 0)
-rm(filtrados, freq1, validos, varsec)
+rm(freq1, validos)
 
 #pops$decada <- NA
 #pops$decada <- floor(pops$year / 10) * 10
@@ -258,7 +261,6 @@ rm(filtrados, freq1, validos, varsec)
 pops <- pops[, c("Artist1", "year", "duration", "pop", "dance", "instr", "acoust", "speech", "liveness", "energy", "loudness", "valence", "tempo")]
 
 --------------------------------------
-
 max_pop <- aggregate(pop ~ year, data = pops, FUN = max)
 
 # Mostrar los resultados como texto
@@ -269,26 +271,51 @@ for (i in 1:nrow(max_pop)) {
   cat("El artista más popular de", año, "es", artist, "\n")
 }
 
+#TABLA CON LOS MÁS POPULARES DESDE EL 2000: 
+popsxaño <- pops %>% group_by(year) %>% filter(year >= 2000)
+popsxaño <- aggregate(. ~ Artist1, data = popsxaño[, c("Artist1", varsec)], FUN = mean)
+popsxaño$tempo <- round(popsxaño$tempo, 0)
+popsxaño$valence <- round(popsxaño$valence, 2)
+popsxaño$dance <- round(popsxaño$dance, 2)
+popsxaño$acoust <- round(popsxaño$acoust, 2)
+popsxaño$liveness <- round(popsxaño$liveness, 2)
+popsxaño$energy <- round(popsxaño$energy, 2)
+popsxaño$speech <- round(popsxaño$speech, 2)
+popsxaño$instr <- round(popsxaño$instr, 2)
+popsxaño$loudness <- round(popsxaño$loudness, 2)
+popsxaño$pop <- round(popsxaño$pop, 0)
+popsxaño$year <- round(popsxaño$year, 0)
+popsxaño$duration <- round(popsxaño$duration, 2)
+
+#GRAFICA DE LOS MAS POPULARES DESDE EL 2000:
+graf <- popsxaño %>% filter(pop >= 70) %>% ggplot(aes(x = pop, y = reorder(Artist1, pop))) + geom_bar(stat = "identity") + 
+  labs(x = "", y = "") + theme_economist() + theme(plot.title = element_text(margin = margin(b = 20))) + xlim(0.0, 100.0) + ggtitle("Los artistas más populares del siglo XXI:")
+graf
+
 --------------------------------------
+ggcorr(popsxaño[, vv])
 
-#AHORA SÍ PODRIA BUSCAR LOS ARTISTAS SIMILARES A OTRO YA QUE EN PROM QUEDÓ UNA LINEA POR ARTISTA
 
-  ggcorr(pops[, vv])
 
-  vv <- 3:13
+  
 
-distancias <- as.matrix(dist(pops[, vv]))
+-------------------------------------
+#ANALIZAR ARTISTAS SIMILARES A OTROS:
+artsimil <- aggregate(. ~ Artist1, data = spotify[, c("Artist1", varsec)], FUN = mean)
 
-artista <- which((pops$Artist1 == "ariana grande"))
+vv <- 3:13
+distancias <- as.matrix(dist(artsimil[, vv]))
+artista <- which((artsimil$Artist1 == "the beatles"))
 
 similares <- data.frame(
-  Artist1 = pops$Artist1,
+  Artist1 = artsimil$Artist1,
   distancia_to_bb = distancias[, artista]
 )
 
 similares$dd <- with(similares, reorder(Artist1, distancia_to_bb))
 
-ggplot(subset(similares, subset = rank(distancia_to_bb) < 11)) + geom_point(aes(distancia_to_bb, dd)) + 
-labs(y = "") + theme(axis.title.y = element_text(size = I(15)))
-
+ggplot(subset(similares, subset = rank(distancia_to_bb) < 11)) + 
+  geom_point(aes(distancia_to_bb, dd), size = 2) + theme_economist() + xlab("") + ylab("")
+  theme(axis.title.y = element_text(size = I(15))) + ggtitle("Artistas más similares a The Beatles:")
   
+
